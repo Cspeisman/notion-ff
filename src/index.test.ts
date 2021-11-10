@@ -35,14 +35,14 @@ class NotionClientFake implements NotionClientContract {
 describe('NotionFF', () => {
     it('should throw an error if the database_id is not provided', async () => {
         const client = new NotionClientFake();
-        await expect(() => NotionFF.initialize(client, '', undefined))
+        await expect(() => NotionFF.initialize( '', undefined, client))
             .rejects
             .toThrow('No DB id was provided, please pass a db id to the constructor');
     });
 
     it('should query the database after instantiating a new object', async () => {
         const client = new NotionClientFake();
-        const ff = await NotionFF.initialize(client, 'example@test.com', '1234');
+        const ff = await NotionFF.initialize( 'example@test.com', '1234', client);
         expect(ff.enabled('featureA')).toBeFalsy();
     });
 
@@ -60,7 +60,7 @@ describe('NotionFF', () => {
             return Promise.resolve([response]);
         }
 
-        const ff = await NotionFF.initialize(client, 'example@test.com', '1234');
+        const ff = await NotionFF.initialize( 'example@test.com', '1234', client);
         expect(ff.enabled('featureA')).toBeTruthy();
     });
 
@@ -87,7 +87,7 @@ describe('NotionFF', () => {
                 }
             }
         });
-        const ff = await NotionFF.initialize(client, 'user@test.com', '1234');
+        const ff = await NotionFF.initialize( 'user@test.com', '1234', client);
         expect(ff.enabled('featureA')).toBe(true);
     });
 
@@ -102,7 +102,7 @@ describe('NotionFF', () => {
             }
         }));
 
-        const ff = new NotionFF(client, 'user@test.com', '1234');
+        const ff = new NotionFF( 'user@test.com', '1234', client);
         const result = await ff.isUserEnabled(pageIds);
         expect(client.getPersonPage).toHaveBeenCalledTimes(2);
         expect(result).toBeFalsy();
@@ -126,7 +126,7 @@ describe('NotionFF', () => {
             }
         });
 
-        const ff = await new NotionFF(client, 'user@test.com', '');
+        const ff = await new NotionFF( 'user@test.com', '', client);
         const enabled = await ff.isUserInTeam(['123']);
         expect(enabled).toBeTruthy();
     });

@@ -1,4 +1,4 @@
-import { NotionClientContract } from "./NotionClient";
+import {NotionClient, NotionClientContract} from "./NotionClient";
 
 const factory = require('@teleology/feature-gate');
 
@@ -43,19 +43,18 @@ export class NotionFF {
     private readonly user: string;
     private readonly db_id: string;
 
-    constructor(notionClient: NotionClientContract, userEmail: string, dbId: string) {
+    constructor(userEmail: string, dbId: string, notionClient?: NotionClientContract) {
         this.notion = notionClient
         this.user = userEmail ?? '';
         this.db_id = dbId;
     }
 
-    static async initialize(notionClient: NotionClientContract, userEmail: string = '', dbId: string) {
-        // throw error if no db_id is provided
+    static async initialize(userEmail: string = '', dbId: string, notionClient?: NotionClientContract) {
         if (!dbId) {
             throw new Error('No DB id was provided, please pass a db id to the constructor');
         }
 
-        const instance = new NotionFF(notionClient, userEmail, dbId);
+        const instance = new NotionFF(userEmail, dbId, notionClient ?? new NotionClient());
         await instance.loadFeatures();
         return instance;
     }
