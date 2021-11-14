@@ -1,6 +1,5 @@
 import {Client} from "@notionhq/client/build/src";
 import {FeatureFlagRow, PersonPageRow, TeamPageRow} from "./index";
-import * as Process from "process";
 
 export interface NotionClientContract {
     getDatabase(database_id: string): Promise<FeatureFlagRow[]>;
@@ -14,7 +13,7 @@ export class NotionClient implements NotionClientContract {
 
     constructor(notion?: Client) {
         this.notion = notion ?? new Client({
-            auth: Process.env.NOTION_TOKEN,
+            auth: process.env.NOTION_TOKEN,
         });
     }
 
