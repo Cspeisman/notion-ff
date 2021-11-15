@@ -1,5 +1,5 @@
-import {FeatureFlagRow, NotionFF, PersonPageRow, TeamPageRow} from "./index";
-import {NotionClientContract} from "./NotionClient";
+import {NotionFF, PersonPageRow, TeamPageRow} from "./index";
+import {FeatureFlagRow, NotionClientContract, RowModel} from "./NotionClient";
 
 const defaultResponse: FeatureFlagRow = {
     properties: {
@@ -26,10 +26,10 @@ const defaultResponse: FeatureFlagRow = {
 };
 
 class NotionClientFake implements NotionClientContract {
-    getDatabase = (database_id: string): Promise<FeatureFlagRow[]> => Promise.resolve([defaultResponse]);
-    getPage = (pageId: string): Promise<PersonPageRow> => Promise.resolve(undefined);
-    getPersonPage = (pageId: string): Promise<PersonPageRow> => Promise.resolve(undefined);
-    getTeamPage = (pageId: string): Promise<TeamPageRow> => Promise.resolve(undefined);
+    getDatabase = (): Promise<RowModel[]> => Promise.resolve([defaultResponse].map(row => new RowModel(row)));
+    getPage = (): Promise<PersonPageRow> => Promise.resolve(undefined);
+    getPersonPage = (): Promise<PersonPageRow> => Promise.resolve(undefined);
+    getTeamPage = (): Promise<TeamPageRow> => Promise.resolve(undefined);
 }
 
 describe('NotionFF', () => {
@@ -48,7 +48,7 @@ describe('NotionFF', () => {
 
     it('should tell me if a feature is enabled or not', async () => {
         const client = new NotionClientFake();
-        client.getDatabase = (id: string) => {
+        client.getDatabase = () => {
             const response = {
                 properties: {
                 ...defaultResponse.properties,
@@ -57,7 +57,7 @@ describe('NotionFF', () => {
                     }
                 }
             } as FeatureFlagRow;
-            return Promise.resolve([response]);
+            return Promise.resolve([new RowModel(response)]);
         }
 
         const ff = await NotionFF.initialize( 'example@test.com', '1234', client);
@@ -77,7 +77,8 @@ describe('NotionFF', () => {
                     }
                 }
             };
-            return Promise.resolve([response]);
+
+            return Promise.resolve([new RowModel(response)]);
         }
 
         client.getPersonPage = jest.fn().mockResolvedValue({

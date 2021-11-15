@@ -1,26 +1,6 @@
-import {NotionClient, NotionClientContract} from "./NotionClient";
+import {NotionClient, NotionClientContract, RowModel} from "./NotionClient";
 
 const factory = require('@teleology/feature-gate');
-
-interface RelationRow {
-    relation: {id: string}[]
-}
-
-export interface FeatureFlagRow {
-    properties: {
-        Enabled: {
-            checkbox: boolean
-        },
-        People: RelationRow,
-        Teams: RelationRow,
-        Name: {
-            title: {plain_text: string}[]
-        },
-        Percentage: {
-            number: number | null
-        },
-    }
-}
 
 export interface PersonPageRow {
     properties: {
@@ -60,37 +40,31 @@ export class NotionFF {
     }
 
     private async loadFeatures() {
-        const results = await this.notion.getDatabase(this.db_id);
+        const rowModels = await this.notion.getDatabase(this.db_id);
 
-        for (let result of results) {
-            let featureEnabled = NotionFF.isEnabledForAll(result);
+        for (let row of rowModels) {
+            let featureEnabled = row.featureIsEnable();
 
-            if (NotionFF.shouldLookupPage(featureEnabled, result.properties.People)) {
-                const peoplePageIds = (result.properties.People).relation.map((row: { id: string }) => row.id);
-                featureEnabled = await this.isUserEnabled(peoplePageIds);
+            if (NotionFF.shouldLookupPage(featureEnabled, row.getPeoplePageId())) {
+                featureEnabled = await this.isUserEnabled(row.getPeoplePageId());
             }
 
-            if (NotionFF.shouldLookupPage(featureEnabled, result.properties.Teams)) {
-                const teamIds = result.properties.Teams.relation.map((row: { id: string }) => row.id);
-                featureEnabled = await this.isUserInTeam(teamIds);
+            if (NotionFF.shouldLookupPage(featureEnabled, row.getTeamPageId())) {
+                featureEnabled = await this.isUserInTeam(row.getTeamPageId());
             }
 
             if (!featureEnabled) {
-                featureEnabled = this.userInRollout(result);
+                featureEnabled = this.userInRollout(row);
             }
 
             if (featureEnabled) {
-                this.db.add((result.properties.Name as any).title[0].plain_text);
+                this.db.add(row.getFeatureName());
             }
         }
     }
 
-    private static shouldLookupPage(featureEnabled: boolean, column: RelationRow) {
-        return !featureEnabled && column.relation.length > 0;
-    }
-
-    private static isEnabledForAll(result: FeatureFlagRow) {
-        return result.properties.Enabled.checkbox;
+    private static shouldLookupPage(featureEnabled: boolean, pageIds: string[]): boolean {
+        return !featureEnabled && pageIds.length > 0;
     }
 
     enabled(feature: string): boolean {
@@ -117,17 +91,17 @@ export class NotionFF {
             const peoplePageIds = teamPage.properties.members.relation.map((row: { id: string }) => row.id);
             const isEnabled = await this.isUserEnabled(peoplePageIds);
             if (isEnabled) {
-                return true;
+                return isEnabled;
             }
         }
 
         return false;
     }
 
-    private userInRollout(result: FeatureFlagRow) {
-        const featureKey = (result.properties.Name as any).title[0].plain_text;
+    private userInRollout(result: RowModel) {
+        const featureKey = result.getFeatureName();
         const gate = factory({
-            [featureKey]: result.properties.Percentage.number
+            [featureKey]: result.getRolloutPercentage()
         });
 
         return gate(featureKey, this.user);
