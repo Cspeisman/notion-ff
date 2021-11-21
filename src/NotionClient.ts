@@ -1,72 +1,37 @@
 import {Client} from "@notionhq/client/build/src";
 import {PersonPageRow, TeamPageRow} from "./index";
+import {FeatureRow} from "./FeatureRow";
 
 interface RelationRow {
     relation: {id: string}[]
 }
 
-export interface FeatureFlagRow {
-    properties: {
-        Enabled: {
-            checkbox: boolean
-        },
-        People: RelationRow,
-        Teams: RelationRow,
-        Name: {
-            title: {plain_text: string}[]
-        },
-        Percentage: {
-            number: number | null
-        }
+export type Properties = {
+    Enabled: {
+        checkbox: boolean
+    },
+    People: RelationRow,
+    Teams: RelationRow,
+    Name: {
+        title: { plain_text: string }[]
+    },
+    Percentage: {
+        number: number | null
     }
+};
+
+export interface FeatureFlagRow {
+    properties: Properties
 }
 
 export interface NotionClientContract {
-    getDatabase(database_id: string): Promise<RowModel[]>;
+    getDatabase(database_id: string): Promise<FeatureRow[]>;
     getPage(pageId: string): Promise<PersonPageRow|TeamPageRow>;
-    getPersonPage(pageId: string): Promise<PersonPageRow>;
-    getTeamPage(pageId: string): Promise<TeamPageRow>;
+    getEmailsFromTeamPages(teamPageIds: string[]): Promise<Set<string>>;
+    getEmailsFromPersonPages(peoplePageIds: string[]): Promise<Set<string>>;
 }
 
-export class RowModel {
-    private result: FeatureFlagRow;
-    private peopleIds: string[];
-    private teamsIds: string[];
-    constructor(result: FeatureFlagRow) {
-        this.result = result;
-    }
-
-    getFeatureName() {
-        return this.result.properties.Name.title[0].plain_text;
-    }
-
-    getPeoplePageId() {
-        if (this.peopleIds) {
-            return this.peopleIds;
-        }
-
-        this.peopleIds = this.result.properties.People.relation.map(relation => relation.id);
-        return this.peopleIds;
-    }
-
-    getTeamPageId() {
-        if (this.teamsIds) {
-            return this.teamsIds;
-        }
-        this.teamsIds = this.result.properties.Teams.relation.map((row: { id: string }) => row.id);
-        return this.teamsIds;
-    }
-
-    featureIsEnable() {
-        return this.result.properties.Enabled.checkbox;
-    }
-
-    getRolloutPercentage() {
-        return this.result.properties.Percentage.number;
-    }
-}
-
-export class NotionClient implements NotionClientContract {
+export class NotionClient implements NotionClientContract{
     private notion: Client;
 
     constructor(notion?: Client) {
@@ -75,20 +40,26 @@ export class NotionClient implements NotionClientContract {
         });
     }
 
-    async getPersonPage(pageId: string): Promise<PersonPageRow> {
-        return await this.getPage(pageId) as PersonPageRow;
+    async getEmailsFromPersonPages(peoplePageIds: string[]): Promise<Set<string>> {
+        const requests = peoplePageIds.map(id => this.getPage(id));
+        const responses = await Promise.all(requests);
+        const emails = responses.map((response: PersonPageRow) => response.properties.Email.email);
+        return new Set(emails);
     }
 
-    async getTeamPage(pageId: string): Promise<TeamPageRow> {
-        return await this.getPage(pageId) as TeamPageRow;
-    }
-
-    async getDatabase(database_id: string): Promise<RowModel[]> {
-        const {results} = await this.notion.databases.query({
-            database_id
+    async getEmailsFromTeamPages(teamPageIds: string[]): Promise<Set<string>> {
+        const requests = teamPageIds.map(id => this.getPage(id));
+        const responses = await Promise.all(requests);
+        const teamMemberEmails = responses.map((response: TeamPageRow) => {
+            return response.properties.member_emails.rollup.array.map((obj: any) => obj.email);
         });
 
-        return results.map((result: any) => new RowModel(result as FeatureFlagRow));
+        return new Set(teamMemberEmails.flat());
+    }
+
+    async getDatabase(database_id: string): Promise<FeatureRow[]> {
+        const {results} = await this.notion.databases.query({database_id});
+        return results.map((result: any) => new FeatureRow(result, this));
     }
 
     async getPage(pageId: string): Promise<PersonPageRow|TeamPageRow> {

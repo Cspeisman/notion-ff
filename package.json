@@ -26,7 +26,8 @@
   },
   "scripts": {
     "watch": "parcel watch",
-    "build": "parcel build"
+    "build": "parcel build",
+    "test": "jest src/tests"
   },
   "repository": {
     "type": "git",

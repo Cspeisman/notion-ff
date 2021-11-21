@@ -1,4 +1,5 @@
-import {NotionClient, NotionClientContract, RowModel} from "./NotionClient";
+import {NotionClient, NotionClientContract} from "./NotionClient";
+import {FeatureRow} from "./FeatureRow";
 
 const factory = require('@teleology/feature-gate');
 
@@ -11,6 +12,11 @@ export interface PersonPageRow {
 }
 export interface TeamPageRow {
     properties: {
+        member_emails: {
+            rollup: {
+                array: { email: string }[]
+            },
+        }
         members: {
             relation: {id: string}[]
         }
@@ -21,36 +27,34 @@ export class NotionFF {
     private notion: NotionClientContract;
     public db: Set<string> = new Set();
     private readonly user: string;
-    private readonly db_id: string;
 
-    constructor(userEmail: string, dbId: string, notionClient?: NotionClientContract) {
+    constructor(userEmail: string, notionClient?: NotionClientContract) {
         this.notion = notionClient
         this.user = userEmail ?? '';
-        this.db_id = dbId;
     }
 
-    static async initialize(userEmail: string = '', dbId: string, notionClient?: NotionClientContract) {
+    static async initialize(userEmail: string = '', dbId: string, client?: NotionClientContract) {
         if (!dbId) {
             throw new Error('No DB id was provided, please pass a db id to the constructor');
         }
 
-        const instance = new NotionFF(userEmail, dbId, notionClient ?? new NotionClient());
-        await instance.loadFeatures();
+        const notionClient = client ?? new NotionClient();
+        const instance = new NotionFF(userEmail, notionClient);
+        await instance.loadFeatures(dbId);
         return instance;
     }
 
-    private async loadFeatures() {
-        const rowModels = await this.notion.getDatabase(this.db_id);
-
+    private async loadFeatures(dbId: string) {
+        const rowModels = await this.notion.getDatabase(dbId);
         for (let row of rowModels) {
             let featureEnabled = row.featureIsEnable();
 
-            if (NotionFF.shouldLookupPage(featureEnabled, row.getPeoplePageId())) {
-                featureEnabled = await this.isUserEnabled(row.getPeoplePageId());
+            if (!featureEnabled) {
+                featureEnabled = await this.isUserEnabled(row);
             }
 
-            if (NotionFF.shouldLookupPage(featureEnabled, row.getTeamPageId())) {
-                featureEnabled = await this.isUserInTeam(row.getTeamPageId());
+            if (!featureEnabled) {
+                featureEnabled = await this.isUserInTeam(row);
             }
 
             if (!featureEnabled) {
@@ -63,42 +67,19 @@ export class NotionFF {
         }
     }
 
-    private static shouldLookupPage(featureEnabled: boolean, pageIds: string[]): boolean {
-        return !featureEnabled && pageIds.length > 0;
-    }
-
     enabled(feature: string): boolean {
         return this.db.has(feature);
     }
 
-    async isUserEnabled(peoplePageIds: string[]) {
-        for (let pageId of peoplePageIds) {
-            const personPage = await this.notion.getPersonPage(pageId);
-            if ((personPage as PersonPageRow).properties.Email !== undefined) {
-                const {email} = personPage.properties.Email;
-                if (this.user === email) {
-                    return true;
-                }
-            }
-        }
-
-        return false;
+    async isUserEnabled(row: FeatureRow) {
+        return (await row.userIsEnabled(this.user));
     }
 
-    async isUserInTeam(teamIds: string[]) {
-        for (let pageId of teamIds) {
-            const teamPage = await this.notion.getTeamPage(pageId);
-            const peoplePageIds = teamPage.properties.members.relation.map((row: { id: string }) => row.id);
-            const isEnabled = await this.isUserEnabled(peoplePageIds);
-            if (isEnabled) {
-                return isEnabled;
-            }
-        }
-
-        return false;
+    async isUserInTeam(row: FeatureRow) {
+        return (await row.userIsInTeam(this.user));
     }
 
-    private userInRollout(result: RowModel) {
+    private userInRollout(result: FeatureRow) {
         const featureKey = result.getFeatureName();
         const gate = factory({
             [featureKey]: result.getRolloutPercentage()
