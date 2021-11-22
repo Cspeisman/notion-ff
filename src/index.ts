@@ -1,5 +1,7 @@
 import {NotionClient, NotionClientContract} from "./NotionClient";
 import {FeatureRow} from "./FeatureRow";
+import {Poller} from "./Poller";
+import getNow from "./utils/getNow";
 
 const factory = require('@teleology/feature-gate');
 
@@ -23,6 +25,7 @@ export interface TeamPageRow {
     }
 }
 
+
 export class NotionFF {
     private notion: NotionClientContract;
     public db: Set<string> = new Set();
@@ -40,43 +43,43 @@ export class NotionFF {
 
         const notionClient = client ?? new NotionClient();
         const instance = new NotionFF(userEmail, notionClient);
-        await instance.loadFeatures(dbId);
+
+        const rows = await instance.notion.getDatabase(dbId)
+        await instance.loadFeatures(rows);
+
+        new Poller(notionClient, instance.loadFeatures, dbId, getNow());
         return instance;
     }
 
-    private async loadFeatures(dbId: string) {
-        const rowModels = await this.notion.getDatabase(dbId);
+    loadFeatures = async (rowModels: FeatureRow[]) =>{
         for (let row of rowModels) {
-            let featureEnabled = row.featureIsEnable();
-
-            if (!featureEnabled) {
-                featureEnabled = await this.isUserEnabled(row);
-            }
-
-            if (!featureEnabled) {
-                featureEnabled = await this.isUserInTeam(row);
-            }
-
-            if (!featureEnabled) {
-                featureEnabled = this.userInRollout(row);
-            }
-
-            if (featureEnabled) {
+            if ((await this.isRowEnabled(row))) {
                 this.db.add(row.getFeatureName());
+            } else {
+                this.db.delete(row.getFeatureName());
             }
         }
+        console.log(this.db);
     }
 
     enabled(feature: string): boolean {
         return this.db.has(feature);
     }
 
-    async isUserEnabled(row: FeatureRow) {
-        return (await row.userIsEnabled(this.user));
-    }
+    async isRowEnabled(row: FeatureRow) {
+        if (row.featureIsEnable()) {
+            return true;
+        }
 
-    async isUserInTeam(row: FeatureRow) {
-        return (await row.userIsInTeam(this.user));
+        if ((await row.userIsEnabled(this.user))) {
+            return true
+        }
+
+        if ((await row.userIsInTeam(this.user))) {
+            return true
+        }
+
+        return !!this.userInRollout(row);
     }
 
     private userInRollout(result: FeatureRow) {
@@ -87,4 +90,5 @@ export class NotionFF {
 
         return gate(featureKey, this.user);
     }
+
 }

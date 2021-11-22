@@ -10,7 +10,7 @@ export class FeatureRow {
     }
 
     getFeatureName() {
-        return this.properties.Name.title[0].plain_text;
+        return this.properties.Name.title[0]?.plain_text || '';
     }
 
     getPeoplePageId() {
