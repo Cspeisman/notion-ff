@@ -1,5 +1,6 @@
 import {NotionClient, NotionClientContract} from "./NotionClient";
 import {FeatureRow} from "./FeatureRow";
+import {Poller} from "./Poller";
 
 const factory = require('@teleology/feature-gate');
 
@@ -40,6 +41,11 @@ export class NotionFF {
 
         const notionClient = client ?? new NotionClient();
         const instance = new NotionFF(userEmail, notionClient);
+
+        new Poller(notionClient, async () => {
+            await instance.loadFeatures(dbId);
+        }, dbId);
+
         await instance.loadFeatures(dbId);
         return instance;
     }
@@ -61,9 +67,7 @@ export class NotionFF {
                 featureEnabled = this.userInRollout(row);
             }
 
-            if (featureEnabled) {
-                this.db.add(row.getFeatureName());
-            }
+            featureEnabled ? this.db.add(row.getFeatureName()) : this.db.delete(row.getFeatureName());
         }
     }
 
