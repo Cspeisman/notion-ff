@@ -42,17 +42,17 @@ describe('NotionFF', () => {
         row.userIsEnabled = jest.fn().mockResolvedValue(true);
 
         const ff = new NotionFF( 'user@test.com', client);
-        const isEnabled = await ff.isUserEnabled(row);
+        const isEnabled = await ff.isRowEnabled(row);
         expect(isEnabled).toBeTruthy();
     });
 
-    it('should return false when a user is enabled for a feature', async () => {
+    it('should return false when a user is not enabled on a row', async () => {
         const client = new NotionClientFake();
         const row = new FeatureRow(defaultResponse, client);
         row.userIsEnabled = jest.fn().mockResolvedValue(false);
 
         const ff = new NotionFF( 'user@test.com', client);
-        const isEnabled = await ff.isUserEnabled(row);
+        const isEnabled = await ff.isRowEnabled(row);
         expect(isEnabled).toBeFalsy();
     });
 
@@ -62,7 +62,7 @@ describe('NotionFF', () => {
         row.userIsInTeam = jest.fn().mockResolvedValue(true);
 
         const ff = new NotionFF( 'user@test.com', client);
-        const isEnabled = await ff.isUserInTeam(row);
+        const isEnabled = await ff.isRowEnabled(row);
         expect(isEnabled).toBeTruthy();
     });
 });

@@ -53,21 +53,11 @@ export class NotionFF {
     private async loadFeatures(dbId: string) {
         const rowModels = await this.notion.getDatabase(dbId);
         for (let row of rowModels) {
-            let featureEnabled = row.featureIsEnable();
-
-            if (!featureEnabled) {
-                featureEnabled = await this.isUserEnabled(row);
+            if ((await this.isRowEnabled(row))) {
+                this.db.add(row.getFeatureName());
+            } else {
+                this.db.delete(row.getFeatureName());
             }
-
-            if (!featureEnabled) {
-                featureEnabled = await this.isUserInTeam(row);
-            }
-
-            if (!featureEnabled) {
-                featureEnabled = this.userInRollout(row);
-            }
-
-            featureEnabled ? this.db.add(row.getFeatureName()) : this.db.delete(row.getFeatureName());
         }
     }
 
@@ -75,12 +65,20 @@ export class NotionFF {
         return this.db.has(feature);
     }
 
-    async isUserEnabled(row: FeatureRow) {
-        return (await row.userIsEnabled(this.user));
-    }
+    async isRowEnabled(row: FeatureRow) {
+        if (row.featureIsEnable()) {
+            return true;
+        }
 
-    async isUserInTeam(row: FeatureRow) {
-        return (await row.userIsInTeam(this.user));
+        if ((await row.userIsEnabled(this.user))) {
+            return true
+        }
+
+        if ((await row.userIsInTeam(this.user))) {
+            return true
+        }
+
+        return !!this.userInRollout(row);
     }
 
     private userInRollout(result: FeatureRow) {
@@ -91,4 +89,5 @@ export class NotionFF {
 
         return gate(featureKey, this.user);
     }
+
 }
