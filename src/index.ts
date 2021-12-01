@@ -24,6 +24,12 @@ export interface TeamPageRow {
     }
 }
 
+
+function getNow() {
+    const coeff = 1000 * 60;
+    return new Date(Math.round(Date.now() / coeff) * coeff).toISOString();
+}
+
 export class NotionFF {
     private notion: NotionClientContract;
     public db: Set<string> = new Set();
@@ -42,16 +48,14 @@ export class NotionFF {
         const notionClient = client ?? new NotionClient();
         const instance = new NotionFF(userEmail, notionClient);
 
-        new Poller(notionClient, async () => {
-            await instance.loadFeatures(dbId);
-        }, dbId);
+        const rows = await instance.notion.getDatabase(dbId)
+        await instance.loadFeatures(rows);
 
-        await instance.loadFeatures(dbId);
+        new Poller(notionClient, instance.loadFeatures, dbId, getNow());
         return instance;
     }
 
-    private async loadFeatures(dbId: string) {
-        const rowModels = await this.notion.getDatabase(dbId);
+    loadFeatures = async (rowModels: FeatureRow[]) =>{
         for (let row of rowModels) {
             if ((await this.isRowEnabled(row))) {
                 this.db.add(row.getFeatureName());
@@ -59,6 +63,7 @@ export class NotionFF {
                 this.db.delete(row.getFeatureName());
             }
         }
+        console.log(this.db);
     }
 
     enabled(feature: string): boolean {

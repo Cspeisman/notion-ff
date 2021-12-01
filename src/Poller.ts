@@ -2,21 +2,27 @@ import {NotionClientContract} from "./NotionClient";
 import {FeatureRow} from "./FeatureRow";
 
 export class Poller {
-    constructor(notionClient: NotionClientContract, callback: () => Promise<void>, dbId: string) {
+    private lastEdited: string;
+    constructor(notionClient: NotionClientContract, callback: (rows: FeatureRow[]) => Promise<void>, dbId: string, lastEdited: string) {
+        this.lastEdited = lastEdited;
         this.poll(notionClient, callback, 3000, dbId).catch(console.error);
     }
 
-    private async poll(notionClient: NotionClientContract, callback: () => Promise<void>, interval: number, dbId: string) {
-        const response = await notionClient.getDatabase(dbId);
-        if (this.hasChanged(response)) {
-            console.log("calling.....");
-            await callback();
+    private async poll(notionClient: NotionClientContract, callback: (rows: FeatureRow[]) => Promise<void>, interval: number, dbId: string) {
+        const lastEditedResponse = await notionClient.getLastEditedTimeForDatabase(dbId, this.lastEdited);
+        if (Poller.hasChanged(lastEditedResponse.results)) {
+            const rows = lastEditedResponse.results.map((result: any) => {
+                this.lastEdited = new Date(this.lastEdited) >= new Date(result.last_edited_time) ? this.lastEdited : result.last_edited_time;
+                return new FeatureRow(result, notionClient)
+            });
+
+            await callback(rows);
         }
 
         setTimeout(() => this.poll(notionClient, callback, interval, dbId), interval);
     }
 
-    private hasChanged(response: FeatureRow[]) {
-        return true;
+    private static hasChanged(results: any[]) {
+        return results.length > 0;
     }
 }

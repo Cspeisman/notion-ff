@@ -28,6 +28,7 @@ export interface NotionClientContract {
     getDatabase(database_id: string): Promise<FeatureRow[]>;
     getPage(pageId: string): Promise<PersonPageRow|TeamPageRow>;
     getEmailsFromTeamPages(teamPageIds: string[]): Promise<Set<string>>;
+    getLastEditedTimeForDatabase(databaseId: string, lastEditedTime: string): Promise<any>;
     getEmailsFromPersonPages(peoplePageIds: string[]): Promise<Set<string>>;
 }
 
@@ -60,6 +61,18 @@ export class NotionClient implements NotionClientContract{
     async getDatabase(database_id: string): Promise<FeatureRow[]> {
         const {results} = await this.notion.databases.query({database_id});
         return results.map((result: any) => new FeatureRow(result, this));
+    }
+
+    async getLastEditedTimeForDatabase(database_id: string, lastEditedTime: string): Promise<any> {
+        return  await this.notion.databases.query({
+            database_id,
+            filter: {
+                property: 'last_edited',
+                date: {
+                    on_or_after: lastEditedTime
+                }
+            }
+        });
     }
 
     async getPage(pageId: string): Promise<PersonPageRow|TeamPageRow> {
