@@ -1,6 +1,6 @@
 import {FeatureFlagRow, NotionClientContract} from "../NotionClient";
 import {FeatureRow} from "../FeatureRow";
-import {PersonPageRow} from "../index";
+import {PersonPageRow} from "../../types";
 
 export const defaultResponse: FeatureFlagRow = {
     properties: {
@@ -31,4 +31,5 @@ export class NotionClientFake implements NotionClientContract {
     getPage = (): Promise<PersonPageRow> => Promise.resolve(undefined);
     getEmailsFromTeamPages = (): Promise<Set<string>> => Promise.resolve(new Set());
     getEmailsFromPersonPages = (): Promise<Set<string>> => Promise.resolve(new Set());
+    getLastEditedTimeForDatabase = () => Promise.resolve({results: []});
 }

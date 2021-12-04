@@ -1,6 +1,6 @@
 import {Client} from "@notionhq/client/build/src";
-import {PersonPageRow, TeamPageRow} from "./index";
 import {FeatureRow} from "./FeatureRow";
+import {PersonPageRow, TeamPageRow} from "../types";
 
 interface RelationRow {
     relation: {id: string}[]

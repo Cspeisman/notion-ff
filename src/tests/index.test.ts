@@ -3,7 +3,6 @@ import {FeatureFlagRow} from "../NotionClient";
 import {FeatureRow} from "../FeatureRow";
 import {defaultResponse, NotionClientFake} from "./utls";
 
-
 describe('NotionFF', () => {
     it('should throw an error if the database_id is not provided', async () => {
         const client = new NotionClientFake();
