@@ -21,7 +21,7 @@ export class NotionFF {
             throw new Error('No DB id was provided, please pass a db id to the constructor');
         }
 
-        const notionClient = client ?? new NotionClient();
+        const notionClient = client ?? new NotionClient({});
         const instance = new NotionFF(userEmail, notionClient, poller);
 
         const rows = await instance.notion.getDatabase(dbId)

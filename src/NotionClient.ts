@@ -35,9 +35,9 @@ export interface NotionClientContract {
 export class NotionClient implements NotionClientContract{
     private notion: Client;
 
-    constructor(notion?: Client) {
+    constructor({notion, authToken} : {notion?: Client, authToken?: string}) {
         this.notion = notion ?? new Client({
-            auth: process.env.NOTION_TOKEN,
+            auth: authToken ?? process.env.NOTION_AUTH_TOKEN,
         });
     }
 
