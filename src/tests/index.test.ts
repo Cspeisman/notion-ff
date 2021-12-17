@@ -1,37 +1,27 @@
 import {NotionFF} from "../index";
-import {FeatureFlagRow} from "../NotionClient";
 import {FeatureRow} from "../FeatureRow";
 import {defaultResponse, NotionClientFake} from "./utls";
 
 describe('NotionFF', () => {
     it('should throw an error if the database_id is not provided', async () => {
-        const client = new NotionClientFake();
-        await expect(() => NotionFF.initialize( '', undefined, client))
+        await expect(() => NotionFF.initialize( '', {dbId: ''}))
             .rejects
             .toThrow('No DB id was provided, please pass a db id to the constructor');
     });
 
-    it('should query the database after instantiating a new object', async () => {
-        const client = new NotionClientFake();
-        const ff = await NotionFF.initialize( 'example@test.com', '1234', client);
-        expect(ff.enabled('featureA')).toBeFalsy();
-    });
-
     it('should tell me if a feature is enabled or not', async () => {
         const client = new NotionClientFake();
-        client.getDatabase = () => {
-            const response = {
-                properties: {
+        const response = {
+            properties: {
                 ...defaultResponse.properties,
-                    Enabled: {
-                        checkbox: true
-                    }
+                Enabled: {
+                    checkbox: true
                 }
-            } as FeatureFlagRow;
-            return Promise.resolve([new FeatureRow(response, client)]);
+            }
         }
 
-        const ff = await NotionFF.initialize( 'example@test.com', '1234', client);
+        const ff = new NotionFF( 'example@test.com', client);
+        await ff.loadFeatures([new FeatureRow(response, client)])
         expect(ff.enabled('featureA')).toBeTruthy();
     });
 

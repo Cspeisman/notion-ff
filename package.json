@@ -1,6 +1,6 @@
 {
   "name": "notion-ff",
-  "version": "1.0.04",
+  "version": "1.0.05",
   "author": "cspeisman",
   "license": "MIT",
   "source": "src/index.ts",
@@ -9,7 +9,8 @@
   "types": "dist/types.d.ts",
   "dependencies": {
     "@notionhq/client": "^0.4.9",
-    "@teleology/feature-gate": "^0.2.1"
+    "@teleology/feature-gate": "^0.2.1",
+    "axios": "^0.24.0"
   },
   "engines": {
     "node": ">= 12"

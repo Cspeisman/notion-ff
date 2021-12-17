@@ -1,6 +1,6 @@
-import {NotionClientContract} from "./NotionClient";
 import {FeatureRow} from "./FeatureRow";
 import getNow from "./utils/getNow";
+import {NotionClientContract} from "../types";
 
 export class Poller {
     private lastEdited: string;

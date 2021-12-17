@@ -1,6 +1,7 @@
-import {NotionClient, NotionClientContract} from "./NotionClient";
+import {NotionClient} from "./NotionClient";
 import {FeatureRow} from "./FeatureRow";
 import {Poller} from "./Poller";
+import {NotionClientContract} from "../types";
 
 const factory = require('@teleology/feature-gate');
 
@@ -16,12 +17,12 @@ export class NotionFF {
         this.poller = poller ?? new Poller(notionClient);
     }
 
-    static async initialize(userEmail: string = '', dbId: string, client?: NotionClientContract, poller?: Poller) {
+    static async initialize(userEmail: string = '', {dbId, authToken, poller}: {dbId: string, authToken?: string, poller?: Poller}) {
         if (!dbId) {
             throw new Error('No DB id was provided, please pass a db id to the constructor');
         }
 
-        const notionClient = client ?? new NotionClient({});
+        const notionClient = new NotionClient(authToken);
         const instance = new NotionFF(userEmail, notionClient, poller);
 
         const rows = await instance.notion.getDatabase(dbId)

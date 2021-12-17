@@ -1,3 +1,5 @@
+import {FeatureRow} from "../src/FeatureRow";
+
 export interface PersonPageRow {
     properties: {
         Email: {
@@ -16,4 +18,34 @@ export interface TeamPageRow {
             relation: {id: string}[]
         }
     }
+}
+
+interface RelationRow {
+    relation: {id: string}[]
+}
+
+export type Properties = {
+    Enabled: {
+        checkbox: boolean
+    },
+    People: RelationRow,
+    Teams: RelationRow,
+    Name: {
+        title: { plain_text: string }[]
+    },
+    Percentage: {
+        number: number | null
+    }
+};
+
+export interface FeatureFlagRow {
+    properties: Properties
+}
+
+export interface NotionClientContract {
+    getDatabase(database_id: string): Promise<FeatureRow[]>;
+    getPage(pageId: string): Promise<PersonPageRow|TeamPageRow>;
+    getEmailsFromTeamPages(teamPageIds: string[]): Promise<Set<string>>;
+    getLastEditedTimeForDatabase(databaseId: string, lastEditedTime: string): Promise<any>;
+    getEmailsFromPersonPages(peoplePageIds: string[]): Promise<Set<string>>;
 }
