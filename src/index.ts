@@ -41,7 +41,6 @@ export class NotionFF {
                 this.db.delete(row.getFeatureName());
             }
         }
-        console.log(this.db);
     }
 
     enabled(feature: string): boolean {

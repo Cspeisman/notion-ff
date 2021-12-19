@@ -31,8 +31,10 @@ export class NotionClient implements NotionClientContract {
     }
 
     async getDatabase(database_id: string): Promise<FeatureRow[]> {
-        const {data} = await axios.post(`https://api.notion.com/v1/databases/${database_id}/query`, {}, this.getHeaders());
-        return data.results.map((result: any) => new FeatureRow(result, this));
+        // notion api doesn't support CORS so using a DARKLANG application as a proxy
+        // const {data} = await axios.post(`https://api.notion.com/v1/databases/${database_id}/query`, {}, this.getHeaders());
+        const {data} = await axios.get(`https://cspeisman.builtwithdark.com/notion-db/${database_id}`, this.getHeaders());
+        return data.map((result: any) => new FeatureRow(result, this));
     }
 
     private getHeaders() {
@@ -54,13 +56,15 @@ export class NotionClient implements NotionClientContract {
                 }
             }
         });
-
-        const {data} = await axios.post(`https://api.notion.com/v1/databases/${database_id}/query`, body, this.getHeaders());
-        return data;
+        // notion api doesn't support CORS so using a DARKLANG application as a proxy
+        const {data} = await axios.post(`https://cspeisman.builtwithdark.com/notion-db/${database_id}`, body, this.getHeaders());
+        return {results: data};
     }
 
     async getPage(pageId: string): Promise<PersonPageRow|TeamPageRow> {
-        const {data} = await axios.get(`https://api.notion.com/v1/pages/${pageId}`, this.getHeaders());console.log(data);
+        // notion api doesn't support CORS so using a DARKLANG application as a proxy
+        // const {data} = await axios.get(`https://api.notion.com/v1/pages/${pageId}`, this.getHeaders());
+        const {data} = await axios.get(`https://cspeisman.builtwithdark.com/notion-page/${pageId}`, this.getHeaders());
         return data;
     }
 }
