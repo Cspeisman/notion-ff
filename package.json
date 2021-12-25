@@ -1,6 +1,6 @@
 {
   "name": "notion-ff",
-  "version": "1.0.06",
+  "version": "1.0.7",
   "author": "cspeisman",
   "license": "MIT",
   "source": "src/index.ts",
