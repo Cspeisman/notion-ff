@@ -1,7 +1,7 @@
 import {NotionClient} from "./NotionClient";
 import {FeatureRow} from "./FeatureRow";
 import {Poller} from "./Poller";
-import {NotionClientContract} from "../types";
+import {NotionClientContract} from "../types/index";
 
 const factory = require('@teleology/feature-gate');
 
