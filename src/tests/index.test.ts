@@ -1,6 +1,6 @@
 import {NotionFF} from "../index";
 import {FeatureRow} from "../FeatureRow";
-import {defaultResponse, NotionClientFake} from "./utls";
+import {defaultResponse, NotionClientFake} from "./utils";
 
 describe('NotionFF', () => {
     it('should throw an error if the database_id is not provided', async () => {
@@ -53,5 +53,13 @@ describe('NotionFF', () => {
         const ff = new NotionFF( 'user@test.com', client);
         const isEnabled = await ff.isRowEnabled(row);
         expect(isEnabled).toBeTruthy();
+    });
+
+    it('should call the callback if one is provided', () => {
+        const client = new NotionClientFake();
+        let callback = jest.fn();
+        const ff = new NotionFF( 'user@test.com', client, null, callback);
+        ff.loadFeatures([]);
+        expect(callback).toHaveBeenCalledWith(ff);
     });
 });

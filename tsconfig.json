@@ -2,13 +2,14 @@
   "compilerOptions": {
     "emitDecoratorMetadata": true,
     "experimentalDecorators": true,
-    "module": "ES2015",
+    "module": "es2015",
     "noImplicitAny": true,
     "removeComments": true,
     "preserveConstEnums": true,
     "sourceMap": true,
     "outDir": "build",
-    "target": "es2015"
+    "target": "es2015",
+    "esModuleInterop": true,
   },
   "include": ["**/*"],
   "exclude": ["node_modules", "**/*.test.ts"]

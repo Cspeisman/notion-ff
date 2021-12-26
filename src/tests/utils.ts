@@ -1,5 +1,5 @@
 import {FeatureRow} from "../FeatureRow";
-import {FeatureFlagRow, NotionClientContract, PersonPageRow} from "../../types";
+import {FeatureFlagRow, NotionClientContract, PersonPageRow} from "../../types/notion-ff";
 
 export const defaultResponse: FeatureFlagRow = {
     properties: {

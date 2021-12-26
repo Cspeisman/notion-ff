@@ -1,5 +1,5 @@
 import {FeatureRow} from "../FeatureRow";
-import {defaultResponse, NotionClientFake} from "./utls";
+import {defaultResponse, NotionClientFake} from "./utils";
 
 describe('FeatureRow', () => {
     it('should return an array of people page ids', () => {

@@ -1,6 +1,6 @@
 import {FeatureRow} from "./FeatureRow";
-import {NotionClientContract, PersonPageRow, TeamPageRow} from "../types";
-import axios from "axios";
+import {NotionClientContract, PersonPageRow, TeamPageRow} from "../types/notion-ff";
+const axios = require("axios");
 
 export class NotionClient implements NotionClientContract {
     private readonly authToken: string;

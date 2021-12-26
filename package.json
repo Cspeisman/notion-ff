@@ -1,12 +1,16 @@
 {
   "name": "notion-ff",
-  "version": "1.0.9",
+  "version": "1.0.92",
   "author": "cspeisman",
   "license": "MIT",
   "source": "src/index.ts",
   "main": "dist/index.js",
   "module": "dist/notion-ff.esm.js",
-  "types": "dist/index.d.ts",
+  "typings": "dist/index.d.ts",
+  "files": [
+    "dist",
+    "src"
+  ],
   "dependencies": {
     "@notionhq/client": "^0.4.9",
     "@teleology/feature-gate": "^0.2.1",

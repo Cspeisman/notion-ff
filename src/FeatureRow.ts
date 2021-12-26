@@ -1,4 +1,4 @@
-import {FeatureFlagRow, NotionClientContract, Properties} from "../types";
+import {FeatureFlagRow, NotionClientContract, Properties} from "../types/notion-ff";
 
 export class FeatureRow {
     private properties: Properties;

@@ -1,33 +1,35 @@
 import {NotionClient} from "./NotionClient";
 import {FeatureRow} from "./FeatureRow";
 import {Poller} from "./Poller";
-import {NotionClientContract} from "../types/index";
+import {NotionClientContract} from "../types/notion-ff";
 
 const factory = require('@teleology/feature-gate');
+
+type Callback = (features: Set<string>) => void;
 
 export class NotionFF {
     private notion: NotionClientContract;
     public db: Set<string> = new Set();
     private readonly user: string;
     private readonly poller: Poller;
-    private callback: any;
+    private readonly callback: any;
 
-    constructor(userEmail: string, notionClient?: NotionClientContract, poller?: Poller) {
+    constructor(userEmail: string, notionClient?: NotionClientContract, poller?: Poller, callback?: Callback) {
         this.notion = notionClient
         this.user = userEmail ?? '';
         this.poller = poller ?? new Poller(notionClient);
+        this.callback = callback ?? (() => {});
     }
 
-    static async initialize(userEmail: string = '', {dbId, authToken, poller}: {dbId: string, authToken?: string, poller?: Poller}, callback: any) {
+    static async initialize(userEmail: string = '', {dbId, authToken, poller}: {dbId: string, authToken?: string, poller?: Poller}, callback?: Callback) {
         if (!dbId) {
             throw new Error('No DB id was provided, please pass a db id to the constructor');
         }
 
         const notionClient = new NotionClient(authToken);
-        const instance = new NotionFF(userEmail, notionClient, poller);
+        const instance = new NotionFF(userEmail, notionClient, poller, callback);
 
         const rows = await instance.notion.getDatabase(dbId)
-        instance.callback = callback;
         await instance.loadFeatures(rows);
         instance.poller.poll(instance.loadFeatures, dbId).catch(console.error);
 
