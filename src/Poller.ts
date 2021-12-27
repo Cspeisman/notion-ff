@@ -11,18 +11,19 @@ export class Poller {
         this.notionClient = notionClient;
     }
 
-    public async poll(callback: (rows: FeatureRow[]) => Promise<void>, dbId: string, interval: number = 3000): Promise<void> {
+    public async poll(updateFeature: (rows: FeatureRow[]) => Promise<void>, dbId: string, interval: number = 3000): Promise<void> {
         const {results} = await this.notionClient.getLastEditedTimeForDatabase(dbId, this.lastEdited);
+
         if (Poller.hasChanged(results)) {
             const rows = results.map((result: any) => {
                 this.updateLastEdited(result.last_edited_time);
                 return new FeatureRow(result, this.notionClient)
             });
 
-            await callback(rows);
+            await updateFeature(rows);
         }
 
-        setTimeout(() => this.poll(callback, dbId, interval), interval);
+        setTimeout(() => this.poll(updateFeature, dbId, interval), interval);
     }
 
     private static hasChanged(results: any[]) {

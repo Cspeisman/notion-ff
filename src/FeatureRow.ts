@@ -1,4 +1,5 @@
 import {FeatureFlagRow, NotionClientContract, Properties} from "../types/notion-ff";
+const factory = require("@teleology/feature-gate");
 
 export class FeatureRow {
     private properties: Properties;
@@ -35,5 +36,30 @@ export class FeatureRow {
 
     async userIsInTeam(user: string): Promise<boolean> {
         return (await this.notionClient.getEmailsFromTeamPages(this.getTeamPageId())).has(user);
+    }
+
+    async isEnabled(user: string): Promise<boolean> {
+        if (this.featureIsEnable()) {
+            return true;
+        }
+
+        if ((await this.userIsEnabled(user))) {
+            return true
+        }
+
+        if ((await this.userIsInTeam(user))) {
+            return true
+        }
+
+        return !!this.userInRollout(user);
+    }
+
+    private userInRollout(user: string) {
+        const featureKey = this.getFeatureName();
+        const gate = factory({
+            [featureKey]: this.getRolloutPercentage()
+        });
+
+        return gate(featureKey, user);
     }
 }

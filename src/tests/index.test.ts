@@ -31,8 +31,9 @@ describe('NotionFF', () => {
         row.userIsEnabled = jest.fn().mockResolvedValue(true);
 
         const ff = new NotionFF( 'user@test.com', client);
-        const isEnabled = await ff.isRowEnabled(row);
-        expect(isEnabled).toBeTruthy();
+        await ff.loadFeatures([row]);
+        expect(ff.enabled('featureA')).toBeTruthy();
+
     });
 
     it('should return false when a user is not enabled on a row', async () => {
@@ -41,8 +42,8 @@ describe('NotionFF', () => {
         row.userIsEnabled = jest.fn().mockResolvedValue(false);
 
         const ff = new NotionFF( 'user@test.com', client);
-        const isEnabled = await ff.isRowEnabled(row);
-        expect(isEnabled).toBeFalsy();
+        await ff.loadFeatures([row]);
+        expect(ff.enabled('featureA')).toBeFalsy();
     });
 
     it('should return true if a user is in an enabled team', async () => {
@@ -51,8 +52,8 @@ describe('NotionFF', () => {
         row.userIsInTeam = jest.fn().mockResolvedValue(true);
 
         const ff = new NotionFF( 'user@test.com', client);
-        const isEnabled = await ff.isRowEnabled(row);
-        expect(isEnabled).toBeTruthy();
+        await ff.loadFeatures([row]);
+        expect(ff.enabled('featureA')).toBeTruthy();
     });
 
     it('should call the callback if one is provided', () => {
