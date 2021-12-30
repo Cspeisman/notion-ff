@@ -56,11 +56,14 @@ describe('NotionFF', () => {
         expect(ff.enabled('featureA')).toBeTruthy();
     });
 
-    it('should call the callback if one is provided', () => {
+    it('should call the callback if one is provided', async () => {
         const client = new NotionClientFake();
-        let callback = jest.fn();
+        let callback = jest.fn()
         const ff = new NotionFF( 'user@test.com', client, null, callback);
-        ff.loadFeatures([]);
-        expect(callback).toHaveBeenCalledWith(ff);
+        const featureRow = new FeatureRow(defaultResponse, client);
+        featureRow.isEnabled = (user: string) => Promise.resolve(true)
+        featureRow.getFeatureName = () => 'featureA';
+        await ff.loadFeatures([featureRow]);
+        expect(callback).toHaveBeenCalledWith(ff, new Set(['featureA']));
     });
 });

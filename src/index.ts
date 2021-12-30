@@ -3,7 +3,7 @@ import {FeatureRow} from "./FeatureRow";
 import {Poller} from "./Poller";
 import {NotionClientContract} from "../types/notion-ff";
 
-type Callback = (features: NotionFF) => void;
+type Callback = (features: NotionFF, featureSet: Set<string>) => void;
 
 export class NotionFF {
     private notionClient: NotionClientContract;
@@ -40,7 +40,7 @@ export class NotionFF {
             await this.addOrRemoveFeatureFromDB(row);
         }
 
-        this.callback(this);
+        this.callback(this, new Set(this.db));
     }
 
     enabled(feature: string): boolean {
